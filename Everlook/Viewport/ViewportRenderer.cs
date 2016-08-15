@@ -62,12 +62,12 @@ namespace Everlook.Viewport
 		/// <summary>
 		/// The camera viewpoint of the observer.
 		/// </summary>
-		public ViewportCamera Camera;
+		public readonly ViewportCamera Camera;
 
 		/// <summary>
 		/// The movement component for the camera.
 		/// </summary>
-		private CameraMovement Movement;
+		private readonly CameraMovement Movement;
 
 		/// <summary>
 		/// The time taken to render the previous frame.
@@ -278,10 +278,7 @@ namespace Everlook.Viewport
 			lock (RenderTargetLock)
 			{
 				// Dispose of the old render target
-				if (this.RenderTarget != null)
-				{
-					this.RenderTarget.Dispose();
-				}
+				this.RenderTarget?.Dispose();
 
 				// Assign the new one
 				this.RenderTarget = inRenderable;
@@ -296,10 +293,7 @@ namespace Everlook.Viewport
 		/// </summary>
 		public void Dispose()
 		{
-			if (this.RenderTarget != null)
-			{
-				this.RenderTarget.Dispose();
-			}
+			this.RenderTarget?.Dispose();
 
 			GL.DeleteVertexArrays(1, ref this.VertexArrayID);
 		}

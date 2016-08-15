@@ -36,7 +36,7 @@ namespace Everlook.Explorer
 	/// <summary>
 	/// The Explorer Builder class acts as a background worker for the file explorer, enumerating file nodes as requested.
 	/// </summary>
-	public class ExplorerBuilder : IDisposable
+	public sealed class ExplorerBuilder : IDisposable
 	{
 		/// <summary>
 		/// Occurs when a package group has been added.
@@ -76,7 +76,7 @@ namespace Everlook.Explorer
 		/// that act as a cohesive unit. Usually, a single package group represents a single game
 		/// instance.
 		/// </summary>
-		public readonly Dictionary<string, PackageGroup> PackageGroups = new Dictionary<string, PackageGroup>();
+		private readonly Dictionary<string, PackageGroup> PackageGroups = new Dictionary<string, PackageGroup>();
 
 		/// <summary>
 		/// The package node group mapping. Maps package groups to their base virtual item references.
@@ -143,25 +143,25 @@ namespace Everlook.Explorer
 		/// is calcuated in the constructor, and is equal to the number of available processor cores
 		/// multiplied by 250.
 		/// </summary>
-		private readonly int MaxEnumerationThreadCount;
+		private static readonly int MaxEnumerationThreadCount = Environment.ProcessorCount * 250;
 
 		/// <summary>
 		/// Whether or not the explorer builder should currently process any work. Acts as an on/off switch
 		/// for the main background thread.
 		/// </summary>
-		private bool bShouldProcessWork;
+		private bool ShouldProcessWork;
 
 		/// <summary>
 		/// Whether or not all possible package groups for the provided paths in <see cref="CachedPackageDirectories"/>
 		/// have been created and loaded.
 		/// </summary>
-		private bool bArePackageGroupsLoaded;
+		private bool ArePackageGroupsLoaded;
 
 		/// <summary>
 		/// Whether or not the explorer builder is currently reloading. Reloading constitutes clearing all
 		/// enumerated data, and recreating all package groups using the new paths.
 		/// </summary>
-		private bool bIsReloading;
+		private bool IsReloading;
 
 
 		/// <summary>
@@ -169,8 +169,6 @@ namespace Everlook.Explorer
 		/// </summary>
 		public ExplorerBuilder()
 		{
-			this.MaxEnumerationThreadCount = Environment.ProcessorCount * 250;
-
 			this.EnumerationLoopThread = new Thread(EnumerationLoop);
 			this.ResubmissionLoopThread = new Thread(ResubmissionLoop);
 			Reload();
@@ -182,7 +180,7 @@ namespace Everlook.Explorer
 		/// <value><c>true</c> if this instance is active; otherwise, <c>false</c>.</value>
 		public bool IsActive
 		{
-			get { return bShouldProcessWork; }
+			get { return ShouldProcessWork; }
 		}
 
 		/// <summary>
@@ -192,7 +190,7 @@ namespace Everlook.Explorer
 		{
 			if (!EnumerationLoopThread.IsAlive)
 			{
-				this.bShouldProcessWork = true;
+				this.ShouldProcessWork = true;
 
 				this.ResubmissionLoopThread.Start();
 				this.EnumerationLoopThread.Start();
@@ -210,7 +208,7 @@ namespace Everlook.Explorer
 		{
 			if (EnumerationLoopThread.IsAlive)
 			{
-				this.bShouldProcessWork = false;
+				this.ShouldProcessWork = false;
 			}
 			else
 			{
@@ -223,10 +221,10 @@ namespace Everlook.Explorer
 		/// </summary>
 		public void Reload()
 		{
-			if (!bIsReloading)
+			if (!IsReloading)
 			{
-				bIsReloading = true;
-				bArePackageGroupsLoaded = false;
+				IsReloading = true;
+				ArePackageGroupsLoaded = false;
 				Thread t = new Thread(Reload_Implementation);
 
 				t.Start();
@@ -237,7 +235,7 @@ namespace Everlook.Explorer
 		/// Loads all packages in the currently selected game directory. This function does not enumerate files
 		/// and directories deeper than one to keep the UI responsive.
 		/// </summary>
-		protected void Reload_Implementation()
+		private void Reload_Implementation()
 		{
 			if (HasPackageDirectoryChanged())
 			{
@@ -259,19 +257,19 @@ namespace Everlook.Explorer
 					if (Directory.Exists(packageDirectory))
 					{
 						// Create the package group and add it to the available ones
-						string FolderName = Path.GetFileName(packageDirectory);
-						PackageGroup Group = new PackageGroup(FolderName, packageDirectory);
-						// TODO: Creating a package group is real slow. Speed it up
+						string folderName = Path.GetFileName(packageDirectory);
+						PackageGroup group = new PackageGroup(folderName, packageDirectory);
 
-						this.PackageGroups.Add(FolderName, Group);
+						this.PackageGroups.Add(folderName, group);
 
 						// Create a virtual item reference that points to the package group
-						VirtualItemReference packageGroupReference = new VirtualItemReference(Group,
-							new ItemReference(Group));
-						packageGroupReference.State = ReferenceState.Enumerated;
+						VirtualItemReference packageGroupReference = new VirtualItemReference(group, new ItemReference(group))
+						{
+							State = ReferenceState.Enumerated
+						};
 
 						// Create a virtual package folder for the individual packages under the package group
-						ItemReference packageGroupPackagesFolderReference = new ItemReference(Group, packageGroupReference, "");
+						ItemReference packageGroupPackagesFolderReference = new ItemReference(group, packageGroupReference, "");
 
 						// Add the package folder as a child to the package group node
 						packageGroupReference.ChildReferences.Add(packageGroupPackagesFolderReference);
@@ -281,13 +279,13 @@ namespace Everlook.Explorer
 						RaisePackageGroupAdded();
 
 						// Add the packages in the package group as nodes to the package folder
-						foreach (KeyValuePair<string, List<string>> PackageListfile in Group.PackageListfiles)
+						foreach (KeyValuePair<string, List<string>> packageListfile in group.PackageListfiles)
 						{
-							if (PackageListfile.Value != null)
+							if (packageListfile.Value != null)
 							{
-								string PackageName = Path.GetFileName(PackageListfile.Key);
-								ItemReference packageReference = new ItemReference(Group, packageGroupPackagesFolderReference,
-									PackageName, "");
+								string packageName = Path.GetFileName(packageListfile.Key);
+								ItemReference packageReference = new ItemReference(group, packageGroupPackagesFolderReference,
+									packageName, "");
 
 								// Send the package node to the UI
 								this.PackageEnumeratedArgs = new ItemEnumeratedEventArgs(packageReference);
@@ -300,8 +298,8 @@ namespace Everlook.Explorer
 					}
 				}
 
-				bIsReloading = false;
-				bArePackageGroupsLoaded = true;
+				IsReloading = false;
+				ArePackageGroupsLoaded = true;
 			}
 		}
 
@@ -319,38 +317,38 @@ namespace Everlook.Explorer
 		/// </summary>
 		private void EnumerationLoop()
 		{
-			while (bShouldProcessWork)
+			while (ShouldProcessWork)
 			{
 				if (ActiveEnumerationThreads.Count > 0)
 				{
 					// Clear out finished threads
-					List<Thread> FinishedThreads = new List<Thread>();
+					List<Thread> finishedThreads = new List<Thread>();
 					foreach (Thread t in ActiveEnumerationThreads)
 					{
 						if (!t.IsAlive)
 						{
-							FinishedThreads.Add(t);
+							finishedThreads.Add(t);
 						}
 					}
 
-					foreach (Thread t in FinishedThreads)
+					foreach (Thread t in finishedThreads)
 					{
 						ActiveEnumerationThreads.Remove(t);
 					}
 				}
 
-				if (bArePackageGroupsLoaded && WorkQueue.Count > 0)
+				if (ArePackageGroupsLoaded && WorkQueue.Count > 0)
 				{
 					// If there's room for more threads, get the first work order and start a new one
-					if (ActiveEnumerationThreads.Count < this.MaxEnumerationThreadCount)
+					if (ActiveEnumerationThreads.Count < MaxEnumerationThreadCount)
 					{
 						// Grab the first item in the queue.
-						ItemReference targetReference = WorkQueue.First();
-						Thread t = new Thread(EnumerateFilesAndFolders);
+						ItemReference parentReference = WorkQueue.First();
+						Thread t = new Thread(() => EnumerateFilesAndFolders(parentReference));
 						this.ActiveEnumerationThreads.Add(t);
 
-						t.Start(targetReference);
-						WorkQueue.Remove(targetReference);
+						WorkQueue.Remove(parentReference);
+						t.Start();
 					}
 				}
 			}
@@ -378,10 +376,9 @@ namespace Everlook.Explorer
 		/// Enumerates the files and subfolders in the specified package, starting at
 		/// the provided root path.
 		/// </summary>
-		/// <param name="parentReferenceObject">Parent reference where the search should start.</param>
-		protected void EnumerateFilesAndFolders(object parentReferenceObject)
+		/// <param name="parentReference">Parent reference where the search should start.</param>
+		private void EnumerateFilesAndFolders(ItemReference parentReference)
 		{
-			ItemReference parentReference = parentReferenceObject as ItemReference;
 			if (parentReference != null)
 			{
 				VirtualItemReference virtualParentReference = parentReference as VirtualItemReference;
@@ -407,7 +404,7 @@ namespace Everlook.Explorer
 		/// Enumerates a hard reference.
 		/// </summary>
 		/// <param name="hardReference">Hard reference.</param>
-		protected void EnumerateHardReference(ItemReference hardReference)
+		private void EnumerateHardReference(ItemReference hardReference)
 		{
 			List<ItemReference> localEnumeratedReferences = new List<ItemReference>();
 			List<string> packageListFile;
@@ -415,9 +412,9 @@ namespace Everlook.Explorer
 			{
 				IEnumerable<string> strippedListfile =
 					packageListFile.Where(s => s.StartsWith(hardReference.ItemPath, true, new CultureInfo("en-GB")));
-				foreach (string FilePath in strippedListfile)
+				foreach (string filePath in strippedListfile)
 				{
-					string childPath = Regex.Replace(FilePath, "^(?-i)" + Regex.Escape(hardReference.ItemPath), "");
+					string childPath = Regex.Replace(filePath, "^(?-i)" + Regex.Escape(hardReference.ItemPath), "");
 
 					int slashIndex = childPath.IndexOf('\\');
 					string topDirectory = childPath.Substring(0, slashIndex + 1);
@@ -474,7 +471,7 @@ namespace Everlook.Explorer
 		/// </summary>
 		private void ResubmissionLoop()
 		{
-			while (bShouldProcessWork)
+			while (ShouldProcessWork)
 			{
 				List<ItemReference> readyReferences = new List<ItemReference>();
 				for (int i = 0; i < this.WaitQueue.Count; ++i)
@@ -540,7 +537,7 @@ namespace Everlook.Explorer
 		/// <summary>
 		/// Raises the package group added event.
 		/// </summary>
-		protected void RaisePackageGroupAdded()
+		private void RaisePackageGroupAdded()
 		{
 			if (PackageGroupAdded != null)
 			{
@@ -551,7 +548,7 @@ namespace Everlook.Explorer
 		/// <summary>
 		/// Raises the package enumerated event.
 		/// </summary>
-		protected void RaisePackageEnumerated()
+		private void RaisePackageEnumerated()
 		{
 			if (PackageEnumerated != null)
 			{
@@ -562,7 +559,7 @@ namespace Everlook.Explorer
 		/// <summary>
 		/// Raises the enumeration finished event.
 		/// </summary>
-		protected void RaiseEnumerationFinished()
+		private void RaiseEnumerationFinished()
 		{
 			if (EnumerationFinished != null)
 			{
@@ -580,16 +577,16 @@ namespace Everlook.Explorer
 		/// <see cref="Everlook.Explorer.ExplorerBuilder"/> was occupying.</remarks>
 		public void Dispose()
 		{
-			bShouldProcessWork = false;
+			ShouldProcessWork = false;
 
 			foreach (Thread t in ActiveEnumerationThreads)
 			{
 				t.Abort();
 			}
 
-			foreach (KeyValuePair<string, PackageGroup> Group in this.PackageGroups)
+			foreach (KeyValuePair<string, PackageGroup> packageGroup in this.PackageGroups)
 			{
-				Group.Value.Dispose();
+				packageGroup.Value.Dispose();
 			}
 		}
 	}
@@ -619,10 +616,10 @@ namespace Everlook.Explorer
 		/// <summary>
 		/// Initializes a new instance of the <see cref="Everlook.Explorer.ItemEnumeratedEventArgs"/> class.
 		/// </summary>
-		/// <param name="InItem">In item.</param>
-		public ItemEnumeratedEventArgs(ItemReference InItem)
+		/// <param name="inItem">In item.</param>
+		public ItemEnumeratedEventArgs(ItemReference inItem)
 		{
-			this.Item = InItem;
+			this.Item = inItem;
 		}
 	}
 }

@@ -127,9 +127,9 @@ namespace Everlook.Explorer
 		/// <param name="inPackageGroup">In group.</param>
 		/// <param name="inHardReference">In hard reference.</param>
 		public VirtualItemReference(VirtualItemReference parentVirtualReference, PackageGroup inPackageGroup, ItemReference inHardReference)
-			: this(inPackageGroup, inHardReference)
+			: this(inPackageGroup, parentVirtualReference)
 		{
-			this.ParentReference = parentVirtualReference;
+			this.HardReference = inHardReference;
 		}
 
 		/// <summary>

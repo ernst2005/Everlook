@@ -79,12 +79,12 @@ namespace Everlook.Viewport.Camera
 		/// <summary>
 		/// The default movement speed of the observer within the viewport.
 		/// </summary>
-		public const float DefaultMovementSpeed = 10.0f;
+		private const float DefaultMovementSpeed = 10.0f;
 
 		/// <summary>
 		/// The default turning speed of the observer within the viewport.
 		/// </summary>
-		public const float DefaultTurningSpeed = 1.0f;
+		private const float DefaultTurningSpeed = 10.0f;
 
 		/// <summary>
 		/// Creates a new <see cref="CameraMovement"/> instance, bound to the input camera.
@@ -152,19 +152,19 @@ namespace Everlook.Viewport.Camera
 		}
 
 		/// <summary>
-		/// Rotates the camera on the horizontal axis by the provided amount of degrees.
+		/// Rotates the camera on the horizontal axis by the provided amount of radians.
 		/// </summary>
-		public void RotateHorizontal(float degrees)
+		public void RotateHorizontal(float radians)
 		{
-			Camera.HorizontalViewAngle += degrees;
+			Camera.HorizontalViewAngle += radians;
 		}
 
 		/// <summary>
-		/// Rotates the camera on the vertical axis by the provided amount of degrees.
+		/// Rotates the camera on the vertical axis by the provided amount of radians.
 		/// </summary>
-		public void RotateVertical(float degrees)
+		public void RotateVertical(float radians)
 		{
-			Camera.VerticalViewAngle += degrees;
+			Camera.VerticalViewAngle += radians;
 		}
 
 		/// <summary>

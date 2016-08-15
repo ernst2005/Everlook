@@ -34,8 +34,8 @@
     <Reference Include="INIFileParser, Version=2.3.0.0, Culture=neutral, PublicKeyToken=79af7b307b65cf3c">
       <HintPath>..\packages\ini-parser.2.3.0\lib\net20\INIFileParser.dll</HintPath>
     </Reference>
-    <Reference Include="OpenTK, Version=1.0.0.0, Culture=neutral, PublicKeyToken=bad199fe84eb3df4">
-      <Package>opentk</Package>
+    <Reference Include="OpenTK, Version=1.1.0.0, Culture=neutral, PublicKeyToken=bad199fe84eb3df4">
+      <HintPath>..\packages\OpenTK.1.1.2349.61993\lib\NET40\OpenTK.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="gtk-sharp, Version=3.0.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f">
@@ -145,6 +145,10 @@
     <ProjectReference Include="..\..\liblistfile\liblistfile\liblistfile.csproj">
       <Project>{CE32160A-4A61-4813-93A5-D9DFDD7AB470}</Project>
       <Name>liblistfile</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\libwarcraft\libwarcraft\libwarcraft.csproj">
+      <Project>{DA06A44E-A67B-46C7-B07D-E90AEBED0502}</Project>
+      <Name>libwarcraft</Name>
     </ProjectReference>
     <ProjectReference Include="..\GLWidgetGTK3\GLWidgetGTK3.csproj">
       <Project>{47B57CB3-1885-462D-84DA-FBA0AE356F2A}</Project>

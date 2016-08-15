@@ -24,7 +24,7 @@ using OpenTK;
 
 namespace Everlook
 {
-	internal class MainClass
+	internal static class MainClass
 	{
 		public static void Main()
 		{

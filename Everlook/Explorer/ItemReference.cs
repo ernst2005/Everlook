@@ -40,12 +40,12 @@ namespace Everlook.Explorer
 		/// Gets or sets the parent reference.
 		/// </summary>
 		/// <value>The parent reference.</value>
-		public ItemReference ParentReference { get; set; }
+		public readonly ItemReference ParentReference;
 
 		/// <summary>
 		/// Contains a list of references that have this reference as a parent.
 		/// </summary>
-		public List<ItemReference> ChildReferences = new List<ItemReference>();
+		public readonly List<ItemReference> ChildReferences = new List<ItemReference>();
 
 		/// <summary>
 		/// Gets or sets the group this reference belongs to.
@@ -341,8 +341,6 @@ namespace Everlook.Explorer
 			}
 		}
 
-		#region IEquatable implementation
-
 		/// <summary>
 		/// Determines whether the specified <see cref="System.Object"/> is equal to the current <see cref="Everlook.Explorer.ItemReference"/>.
 		/// </summary>
@@ -386,8 +384,6 @@ namespace Everlook.Explorer
 				return false;
 			}
 		}
-
-		#endregion
 
 		/// <summary>
 		/// Returns a <see cref="System.String"/> that represents the current <see cref="Everlook.Explorer.ItemReference"/>.
